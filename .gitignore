@@ -1,0 +1,4 @@
+downloads/*.mp3
+downloads/*.mp4
+__pycache__/
+*.pyc
