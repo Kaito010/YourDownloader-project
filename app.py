@@ -31,8 +31,10 @@ def get_info():
     ydl_opts = {
     'quiet': True,
     'noplaylist': True,
-    'cookiefile': 'youtube.com_cookies.txt', # Adicione esta linha
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
+    'cookiefile': 'cookies.txt',
+    # Força o uso do Node.js que instalamos no build.sh
+    'javascript_filter': True, 
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
 }
     
     try:
