@@ -102,8 +102,6 @@ def fetch_file():
         return response
     return "Erro", 404
 
-if __name__ == '__main__':
-    # O servidor define a porta automaticamente; se não houver, usa 5000
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-    
