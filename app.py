@@ -5,14 +5,14 @@ import re
 
 app = Flask(__name__)
 
-# Configuração de pastas
+# Configuração de caminhos absolutos para o Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOAD_FOLDER = os.path.join(BASE_DIR, 'downloads')
 
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
 
-# Validação de Segurança (Apenas links oficiais do YouTube)
+# Validação de Segurança
 YOUTUBE_REGEX = r"^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$"
 
 @app.route('/')
@@ -25,9 +25,15 @@ def get_info():
     url = data.get('url')
     
     if not url or not re.match(YOUTUBE_REGEX, url):
-        return jsonify({"success": False, "error": "Link inválido. Insira um URL do YouTube."})
+        return jsonify({"success": False, "error": "Link inválido."})
 
-    ydl_opts = {'quiet': True, 'noplaylist': True}
+    # User-agent ajuda a evitar bloqueios do YouTube no servidor
+    ydl_opts = {
+        'quiet': True, 
+        'noplaylist': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -37,8 +43,8 @@ def get_info():
                 "duration": info.get('duration_string'),
                 "success": True
             })
-    except Exception:
-        return jsonify({"success": False, "error": "Vídeo indisponível ou protegido."})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/download', methods=['POST'])
 def download_video():
@@ -47,56 +53,46 @@ def download_video():
     format_type = data.get('format')
     quality = data.get('quality') 
     
-    if not re.match(YOUTUBE_REGEX, video_url):
-        return jsonify({"success": False, "error": "Ação bloqueada por segurança."})
-
     if format_type == 'mp3':
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+            'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
             'restrictfilenames': True,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': quality,
             }],
-            'keepvideo': False,
         }
     else:
         ydl_opts = {
             'format': f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best',
-            'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+            'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
             'restrictfilenames': True,
         }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
-            temp_filename = ydl.prepare_filename(info)
-            
+            filename = ydl.prepare_filename(info)
             if format_type == 'mp3':
-                filename = os.path.splitext(temp_filename)[0] + '.mp3'
-            else:
-                filename = temp_filename
+                filename = os.path.splitext(filename)[0] + '.mp3'
             
-            if os.path.exists(filename):
-                return jsonify({"success": True, "file_path": filename})
-            return jsonify({"success": False, "error": "Falha ao gerar arquivo."})
-                
+            return jsonify({"success": True, "file_path": filename})
     except Exception as e:
-        return jsonify({"success": False, "error": "Erro no servidor. Tente uma qualidade menor."})
+        return jsonify({"success": False, "error": "Erro na conversão. Verifique o FFmpeg."})
 
 @app.route('/fetch-file')
 def fetch_file():
     path = request.args.get('path')
-    if os.path.exists(path) and path.startswith(DOWNLOAD_FOLDER):
+    if os.path.exists(path):
         response = send_file(path, as_attachment=True)
         @response.call_on_close
         def remove_file():
             try: os.remove(path)
             except: pass
         return response
-    return "Erro", 404
+    return "Arquivo não encontrado", 404
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
