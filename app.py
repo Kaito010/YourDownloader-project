@@ -16,16 +16,14 @@ if not os.path.exists(DOWNLOAD_FOLDER):
 YOUTUBE_REGEX = r"^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$"
 
 # Opções base para evitar bloqueios (com Cookies e JS Runtime)
-BASE_YDL_OPTS = {
+ydl_opts = {
     'quiet': True,
     'noplaylist': True,
-    'cookiefile': 'cookies.txt',  # Certifique-se de que o arquivo está na raiz
-    'javascript_filter': True,    # Exige o Node.js que instalamos no Docker
+    'cookiefile': 'cookies.txt',
+    # 'best' ajuda a encontrar o formato que o desafio JS permite acessar
+    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
     'http_headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://www.google.com/',
     }
 }
 
