@@ -98,7 +98,7 @@ def fetch_file():
         @response.call_on_close
         def remove_file():
             try: os.remove(path)
-            except: pass
+            except: passs
         return response
     return "Erro", 404
 
