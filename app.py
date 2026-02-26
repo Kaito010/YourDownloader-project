@@ -6,13 +6,11 @@ import re
 app = Flask(__name__)
 
 # Configuração de pastas
-DOWNLOAD_FOLDER = 'downloads'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DOWNLOAD_FOLDER = os.path.join(BASE_DIR, 'downloads')
+
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
-
-# --- CONFIGURAÇÃO MANUAL DO FFMPEG ---
-# Certifique-se de que a pasta 'bin' está dentro de C:/ffmpeg
-FFMPEG_PATH = 'ffmpeg' 
 
 # Validação de Segurança (Apenas links oficiais do YouTube)
 YOUTUBE_REGEX = r"^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$"
@@ -54,7 +52,6 @@ def download_video():
 
     if format_type == 'mp3':
         ydl_opts = {
-            'ffmpeg_location': FFMPEG_PATH,
             'format': 'bestaudio/best',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'restrictfilenames': True,
@@ -67,7 +64,6 @@ def download_video():
         }
     else:
         ydl_opts = {
-            'ffmpeg_location': FFMPEG_PATH,
             'format': f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'restrictfilenames': True,
