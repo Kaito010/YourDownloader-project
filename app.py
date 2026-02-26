@@ -29,10 +29,11 @@ def get_info():
 
     # User-agent ajuda a evitar bloqueios do YouTube no servidor
     ydl_opts = {
-        'quiet': True, 
-        'noplaylist': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
+    'quiet': True,
+    'noplaylist': True,
+    'cookiefile': 'youtube.com_cookies.txt', # Adicione esta linha
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
+}
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
