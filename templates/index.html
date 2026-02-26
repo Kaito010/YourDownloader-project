@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YourDownloader | Downloader Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .selected-format { background: #3b82f6 !important; border-color: #60a5fa !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        select option { background: #1e1b4b; color: white; }
+    </style>
+</head>
+<body class="gradient-bg text-gray-200 min-h-screen font-sans">
+
+    <div class="max-w-4xl mx-auto py-12 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-black text-white mb-2 tracking-tighter">
+                <i class="fa-solid fa-cloud-arrow-down text-blue-500 mr-2"></i>YourDownloader
+            </h1>
+            <p class="text-gray-400">Rápido, Seguro e Estável</p>
+        </header>
+
+        <div class="max-w-xl mx-auto">
+            <div class="glass p-2 rounded-2xl flex items-center mb-8 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                <input type="text" id="url" oninput="checkUrl()" placeholder="Cole o link do YouTube aqui..." 
+                       class="flex-1 bg-transparent p-4 outline-none text-white">
+                <div class="px-4 text-gray-500"><i class="fa-solid fa-link"></i></div>
+            </div>
+
+            <div id="preview-card" class="hidden opacity-0 translate-y-4 transition-all duration-700 glass p-6 rounded-[2rem] mb-12">
+                <div class="relative mb-6">
+                    <img id="thumb" src="" class="w-full h-56 object-cover rounded-2xl shadow-2xl">
+                    <div class="absolute bottom-3 right-3 bg-black/80 px-3 py-1 rounded-lg text-xs font-mono" id="video-duration"></div>
+                </div>
+
+                <h3 id="video-title" class="text-xl font-bold text-white mb-6 line-clamp-2"></h3>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <button onclick="setFormat('mp4')" id="btn-mp4" class="glass py-4 rounded-xl font-bold transition-all flex flex-col items-center gap-2 selected-format">
+                        <i class="fa-solid fa-video"></i>
+                        <span>MP4 Vídeo</span>
+                    </button>
+                    <button onclick="setFormat('mp3')" id="btn-mp3" class="glass py-4 rounded-xl font-bold transition-all flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-music"></i>
+                        <span>MP3 Áudio</span>
+                    </button>
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2 ml-1">Qualidade Disponível</label>
+                    <div class="relative">
+                        <select id="quality-select" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-blue-500 text-white appearance-none cursor-pointer">
+                            </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="dl-btn" onclick="startDownload()" 
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl font-black text-lg shadow-xl transition-all flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-download"></i> BAIXAR AGORA
+                </button>
+                
+                <p id="loading-msg" class="hidden text-center mt-4 text-sm text-blue-400 animate-pulse">
+                    <i class="fa-solid fa-gear fa-spin mr-2"></i>Processando mídia... aguarde a conversão.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+                <div class="glass p-6 rounded-2xl">
+                    <h4 class="text-blue-400 font-bold mb-3"><i class="fa-solid fa-circle-info mr-2"></i>Como usar?</h4>
+                    <p class="text-sm text-gray-400">Cole o link, escolha a qualidade e clique em baixar. O arquivo será removido do servidor logo após o download.</p>
+                </div>
+                <div class="glass p-6 rounded-2xl">
+                    <h4 class="text-emerald-400 font-bold mb-3"><i class="fa-solid fa-shield-halved mr-2"></i>Dica Pro</h4>
+                    <p class="text-sm text-gray-400">Use 720p para downloads rápidos ou 320kbps para a melhor experiência sonora em MP3.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFormat = 'mp4';
+        let currentUrl = "";
+
+        const qualityOptions = {
+            mp4: [
+                { val: '1080', label: '1080p (Full HD)' },
+                { val: '720', label: '720p (HD)' },
+                { val: '480', label: '480p (SD)' }
+            ],
+            mp3: [
+                { val: '320', label: '320kbps (Alta Qualidade)' },
+                { val: '192', label: '192kbps (Padrão)' },
+                { val: '128', label: '128kbps (Econômico)' }
+            ]
+        };
+
+        function updateQualityMenu() {
+            const select = document.getElementById('quality-select');
+            if (!select) return;
+            select.innerHTML = '';
+            qualityOptions[selectedFormat].forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt.val;
+                el.textContent = opt.label;
+                select.appendChild(el);
+            });
+        }
+
+        function setFormat(fmt) {
+            selectedFormat = fmt;
+            document.getElementById('btn-mp4').classList.toggle('selected-format', fmt === 'mp4');
+            document.getElementById('btn-mp3').classList.toggle('selected-format', fmt === 'mp3');
+            updateQualityMenu();
+        }
+
+        async function checkUrl() {
+            const url = document.getElementById('url').value;
+            if(url.includes("youtube.com/") || url.includes("youtu.be/")) {
+                if(url === currentUrl) return;
+                currentUrl = url;
+
+                const res = await fetch('/get-info', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    document.getElementById('thumb').src = data.thumbnail;
+                    document.getElementById('video-title').innerText = data.title;
+                    document.getElementById('video-duration').innerText = data.duration;
+                    
+                    updateQualityMenu(); // Popula o menu logo na prévia
+
+                    const card = document.getElementById('preview-card');
+                    card.classList.remove('hidden');
+                    setTimeout(() => card.classList.remove('opacity-0', 'translate-y-4'), 50);
+                }
+            }
+        }
+
+        async function startDownload() {
+            const btn = document.getElementById('dl-btn');
+            const msg = document.getElementById('loading-msg');
+            const quality = document.getElementById('quality-select').value;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESSANDO...';
+            msg.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url: currentUrl, format: selectedFormat, quality: quality })
+                });
+                const data = await res.json();
+
+                if(data.success) {
+                    window.location.href = `/fetch-file?path=${encodeURIComponent(data.file_path)}`;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
+                } else {
+                    alert("Erro: " + data.error);
+                    btn.innerHTML = 'TENTAR NOVAMENTE';
+                }
+            } catch (e) {
+                alert("Erro de conexão.");
+            } finally {
+                btn.disabled = false;
+                msg.classList.add('hidden');
+            }
+        }
+        
+        updateQualityMenu(); // Inicializa o menu
+    </script>
+</body>
+</html>
