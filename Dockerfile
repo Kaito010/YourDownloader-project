@@ -1,18 +1,15 @@
-# Usa uma imagem oficial do Python
 FROM python:3.11-slim
 
-# Instala FFmpeg e Node.js (necessário para o yt-dlp não ser bloqueado)
+# Instala FFmpeg e Node.js para o yt-dlp funcionar sem bloqueios
 RUN apt-get update && apt-get install -y ffmpeg nodejs && rm -rf /var/lib/apt/lists/*
 
-# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependências e instala
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o restante do código e os cookies
+# Copia tudo, inclusive seu cookies.txt
 COPY . .
 
-# Comando para iniciar a aplicação
+# Comando que o Docker vai usar para ligar o site
 CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
